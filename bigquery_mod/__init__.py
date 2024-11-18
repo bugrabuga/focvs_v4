@@ -104,6 +104,7 @@ class _CustomBigQuerySource(BoundedSource):
             self,
             # gcs_location=None,
             get_destination_uri=None,
+            priority=None,
             table=None,
             dataset=None,
             project=None,
@@ -142,6 +143,7 @@ class _CustomBigQuerySource(BoundedSource):
         self.coder = coder or _JsonToDictCoder
         self.kms_key = kms_key
         self.split_result = None
+        self.priority = priority
 
     @check_accessible(['query'])
     def estimate_size(self):
@@ -160,7 +162,8 @@ class _CustomBigQuerySource(BoundedSource):
                 self.flatten_results,
                 job_id=uuid.uuid4().hex,
                 dry_run=True,
-                kms_key=self.kms_key)
+                kms_key=self.kms_key,
+                priority='BATCH')
             size = int(job.statistics.totalBytesProcessed)
             return size
 
@@ -216,7 +219,8 @@ class _CustomBigQuerySource(BoundedSource):
             self.use_legacy_sql,
             self.flatten_results,
             job_id=uuid.uuid4().hex,
-            kms_key=self.kms_key)
+            kms_key=self.kms_key,
+            priority='BATCH')
         job_ref = job.jobReference
         bq.wait_for_bq_job(job_ref)
         return bq._get_temp_table(self.project.get())
